@@ -59,7 +59,141 @@
 
     <button onclick="clearData()">Clear Data</button>
 
-    <script src="STUDENTS.js"></script>
+    <script >let fiyat = 0;
+
+// Set price for calculations
+function setPrice() {
+    fiyat = parseFloat(document.getElementById("price").value) || 0; // Ensure it's a valid number
+    
+    // Enable the "Add Name" button if a valid price is set
+    let addButton = document.getElementById("addButton");
+    addButton.disabled = fiyat <= 0;
+}
+
+// Save student data
+function saveName() {
+    console.log("saveName function called!");
+    console.log("Current price:", fiyat);
+    
+    if (fiyat <= 0) {
+        console.log("Lütfen önce saat fiyatını girin!");
+        return;
+    }
+
+    
+
+    let nameInput = document.getElementById("name").value.trim();
+    let classInput = document.getElementById("class").value.trim();
+    let hoursInput = document.getElementById("hours").value.trim();
+    
+    if (!nameInput || !classInput || !hoursInput) {
+        alert("Lütfen tüm alanları doldurun!");
+        return;
+    }
+
+    let currentDate = new Date().toISOString().split('T')[0];
+
+    let studentData = JSON.parse(localStorage.getItem("students")) || [];
+
+    studentData.push({
+        name: nameInput,
+        className: classInput,
+        hours: parseInt(hoursInput),
+        date: currentDate
+    });
+
+    localStorage.setItem("students", JSON.stringify(studentData));
+
+    // Clear input fields
+    document.getElementById("name").value = "";
+    document.getElementById("class").value = "";
+    document.getElementById("hours").value = "";
+
+    // Refresh the displayed list
+    displayNames();
+    calculateTotalHours();
+}
+
+// Display saved students
+function displayNames() {
+    let studentData = JSON.parse(localStorage.getItem("students")) || [];
+    let studentList = document.getElementById("studentList");
+
+    studentList.innerHTML = studentData.length === 0 ? "<p>Henüz öğrenci eklenmedi.</p>" : "";
+
+    studentData.forEach((student, index) => {
+        let studentBox = document.createElement("div");
+        studentBox.classList.add("student-box");
+
+        studentBox.innerHTML = `
+            <h4>Öğrenci: ${student.name}</h4>
+            <p>Ders: ${student.className} | Saat: ${student.hours}</p>
+            <p>Eklendi: ${student.date}</p>
+            <p>Fiyat: ${student.hours * fiyat} ₺</p>
+            <button class="remove-button" onclick="removeStudent(${index})">Sil</button>
+        `;
+
+        studentList.appendChild(studentBox);
+    });
+}
+
+// Remove student
+function removeStudent(index) {
+    let studentData = JSON.parse(localStorage.getItem("students")) || [];
+    studentData.splice(index, 1);
+    localStorage.setItem("students", JSON.stringify(studentData));
+
+    displayNames();
+    calculateTotalHours();
+}
+
+// Clear all student data
+function clearData() {
+    localStorage.removeItem("students");
+    displayNames();
+    calculateTotalHours();
+}
+
+// Calculate total hours and cost per class
+function calculateTotalHours() {
+    let studentData = JSON.parse(localStorage.getItem("students")) || [];
+
+    let classHoursMap = {};
+    let totalIncome = 0;
+
+    studentData.forEach(student => {
+        let multipliedValue = student.hours * fiyat;
+
+        totalIncome += multipliedValue;
+
+        if (classHoursMap[student.className]) {
+            classHoursMap[student.className] += multipliedValue;
+        } else {
+            classHoursMap[student.className] = multipliedValue;
+        }
+    });
+
+    // Display class-wise earnings
+    let resultDiv = document.getElementById("totalHoursList");
+    resultDiv.innerHTML = "<h4>Toplam (Saat * Ücret) Ders Bazında:</h4>";
+
+    for (let className in classHoursMap) {
+        let p = document.createElement("p");
+        p.textContent = `${className}: ${classHoursMap[className]} ₺`;
+        resultDiv.appendChild(p);
+    }
+
+    // Display total income in the new box
+    document.getElementById("totalIncome").textContent = `Toplam Gelir: ${totalIncome} ₺`;
+}
+
+// Load data on page load
+document.addEventListener("DOMContentLoaded", () => {
+    displayNames();
+    setPrice();
+    calculateTotalHours();
+    document.getElementById("date").innerText = "Tarih: " + new Date().toISOString().split('T')[0];
+});</script>
 
 </body>
 </html>
